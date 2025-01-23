@@ -26,6 +26,15 @@
       border-radius: 10px;
       background: #ffffff;
     }
+    .user-info {
+      font-size: 1rem;
+      color: #555;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .user-info span {
+      font-weight: bold;
+    }
     .btn {
       width: 100%;
       height: 60px;
@@ -45,7 +54,12 @@
 <body>
   <div class="card text-center">
     <h2 class="mb-4">Welcome to <span style="color:green;">LSOYS Bank</span></h2>
-    <p class="mb-3">Make Transaction with Us by</p>
+    <!-- User Info -->
+    <div class="user-info">
+      <p>Name: <span id="userName">John Doe</span></p>
+      <p>ATM Card Number: <span id="userCardNumber">1234-5678-9101</span></p>
+    </div>
+    <p class="mb-1">Card Inserted!!</p>
     <div class="container">
       <div class="row">
         <!-- Left Buttons -->
@@ -68,6 +82,16 @@
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    // Simulate user data
+    const userData = {
+      name: 'John Doe',
+      cardNumber: '1234-5678-9101'
+    };
+
+    // Display user information
+    document.getElementById('userName').innerText = userData.name;
+    document.getElementById('userCardNumber').innerText = userData.cardNumber;
+
     function handleOption(option) {
       switch (option) {
         case 'deposit':

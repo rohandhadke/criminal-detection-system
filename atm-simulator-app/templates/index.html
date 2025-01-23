@@ -26,11 +26,11 @@
       border-radius: 10px;
       background: #ffffff;
     }
-    .btn-primary, .btn-secondary {
+    .btn-primary, .btn-secondary, .btn-success {
       width: 100%;
       padding: 10px;
     }
-    .btn-secondary {
+    .btn-secondary, .btn-success {
       margin-top: 10px;
     }
   </style>
@@ -46,6 +46,7 @@
           <input type="text" class="form-control" id="cardNumber" placeholder="Enter your card number" required>
         </div>
         <button type="button" class="btn btn-primary" onclick="validateCard()">Next</button>
+        <button type="button" class="btn btn-success" onclick="createNewAccount()">Create New Bank Account</button>
       </div>
 
       <!-- ATM PIN Form -->
@@ -101,6 +102,11 @@
       document.getElementById('pinForm').classList.add('d-none');
       document.getElementById('cardForm').classList.remove('d-none');
       document.getElementById('formTitle').innerText = 'Enter Card Number';
+    }
+
+    function createNewAccount() {
+      // Redirect to the account creation page
+      window.location.href = 'create_account.html';
     }
   </script>
 </body>
