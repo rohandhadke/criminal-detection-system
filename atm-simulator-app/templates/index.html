@@ -91,6 +91,7 @@
       // Simulate PIN validation
       if (pin.length === 4 && !isNaN(pin)) {
         alert('Login successful!');
+        window.location.href = 'main_menu.html';
         // Redirect to main menu or further steps
       } else {
         alert('Invalid PIN. Please try again.');
