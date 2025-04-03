@@ -4,79 +4,514 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Criminal Detection System</title>
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- External CSS -->
-    <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}">
-    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #1cc88a;
+            --danger-color: #e74a3b;
+            --warning-color: #f6c23e;
+            --dark-color: #5a5c69;
+        }
+        
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fc;
+        }
+        
+        /* Navbar */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #224abe 100%) !important;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            padding: 0.75rem 1rem;
+        }
+        
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.2rem;
+            letter-spacing: 0.05rem;
+        }
+        
+        .nav-link {
+            font-weight: 600;
+            padding: 0.5rem 1rem !important;
+            border-radius: 0.35rem;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(rgba(78, 115, 223, 0.8), rgba(78, 115, 223, 0.8)), 
+                        url('https://source.unsplash.com/random/1920x1080/?security') no-repeat center center;
+            background-size: cover;
+            color: white;
+            padding: 8rem 0;
+            text-align: center;
+            position: relative;
+        }
+        
+        .hero-section h1 {
+            font-weight: 800;
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .hero-section p {
+            font-size: 1.25rem;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+        }
+        
+        /* Features Section */
+        .feature-card {
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+        }
+        
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: -40px auto 1.5rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Stats Section */
+        .stats-section {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 4rem 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: #2c3e50;
+            color: white;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+        
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade {
+            animation: fadeIn 0.8s ease forwards;
+        }
+        
+        .delay-1 { animation-delay: 0.2s; }
+        .delay-2 { animation-delay: 0.4s; }
+        .delay-3 { animation-delay: 0.6s; }
+    </style>
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="#">Criminal Detection System</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-shield-lock me-2"></i>Criminal Detection System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="">Login</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{url_for('admin.admin_login')}}">Admin</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#">Help</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">
+                            <i class="bi bi-house-door"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{url_for('police.police_login')}}">
+                            <i class="bi bi-box-arrow-in-right"></i> Police Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{url_for('admin.admin_login')}}">
+                            <i class="bi bi-person-badge"></i> Admin
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-question-circle"></i> Help
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <div class="hero-section">
-        <div style="color:black;">
-            <h1>Welcome to the Criminal Detection System</h1>
-            <p>Ensuring safer banking environments with cutting-edge AI and Facial Recognition</p>
-            <a href="#" class="btn btn-primary btn-lg mt-3">Learn More</a>
-        </div>
-    </div>
-
-    <!-- Features Section -->
-    <section class="container py-5">
-        <div class="row text-center">
-            <div class="col-md-4">
-                <div class="card p-4 shadow-sm">
-                    <img src="https://via.placeholder.com/150" class="card-img-top rounded-circle mx-auto" alt="Feature 1">
-                    <div class="card-body">
-                        <h5 class="card-title">Facial Recognition</h5>
-                        <p class="card-text">Leverage AI to detect criminals and secure banking operations.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 shadow-sm">
-                    <img src="https://via.placeholder.com/150" class="card-img-top rounded-circle mx-auto" alt="Feature 2">
-                    <div class="card-body">
-                        <h5 class="card-title">Secure Transactions</h5>
-                        <p class="card-text">Prevent unauthorized access to accounts by flagging offenders.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card p-4 shadow-sm">
-                    <img src="https://via.placeholder.com/150" class="card-img-top rounded-circle mx-auto" alt="Feature 3">
-                    <div class="card-body">
-                        <h5 class="card-title">Real-Time Alerts</h5>
-                        <p class="card-text">Get instant notifications of suspicious activities in the system.</p>
+    <section class="hero-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center animate-fade">
+                    <h1>Advanced Criminal Detection System</h1>
+                    <p class="lead">Integrating AI-powered facial recognition with banking security to prevent fraud and enhance public safety</p>
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <a href="{{url_for('police.police_login')}}" class="btn btn-light btn-lg px-4">
+                            <i class="bi bi-shield-check me-2"></i>Police Portal
+                        </a>
+                        <a href="#features" class="btn btn-outline-light btn-lg px-4">
+                            <i class="bi bi-arrow-down-circle me-2"></i>Learn More
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-md-3 stat-item animate-fade delay-1">
+                    <div class="stat-number" id="criminalsCount">0</div>
+                    <div class="stat-label">Criminals Detected</div>
+                </div>
+                <div class="col-md-3 stat-item animate-fade delay-2">
+                    <div class="stat-number" id="fraudPrevented">0</div>
+                    <div class="stat-label">Fraud Cases Prevented</div>
+                </div>
+                <div class="col-md-3 stat-item animate-fade delay-1">
+                    <div class="stat-number" id="banksProtected">0</div>
+                    <div class="stat-label">Banks Protected</div>
+                </div>
+                <div class="col-md-3 stat-item animate-fade delay-2">
+                    <div class="stat-number" id="arrestsMade">0</div>
+                    <div class="stat-label">Successful Arrests</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5 animate-fade">
+                <h2 class="fw-bold">Our Advanced Security Features</h2>
+                <p class="lead text-muted">Protecting financial institutions with cutting-edge technology</p>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4 animate-fade delay-1">
+                    <div class="feature-card p-4 text-center">
+                        <div class="feature-icon">
+                            <i class="bi bi-camera-fill"></i>
+                        </div>
+                        <h4 class="mb-3">Facial Recognition</h4>
+                        <p class="text-muted">
+                            Advanced AI algorithms detect known criminals in real-time using our comprehensive database of offender profiles.
+                        </p>
+                        <button class="btn btn-sm btn-outline-primary mt-2">Learn more</button>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 animate-fade delay-2">
+                    <div class="feature-card p-4 text-center">
+                        <div class="feature-icon">
+                            <i class="bi bi-credit-card-fill"></i>
+                        </div>
+                        <h4 class="mb-3">Account Protection</h4>
+                        <p class="text-muted">
+                            Immediate account freezing when a criminal is detected attempting to access banking services.
+                        </p>
+                        <button class="btn btn-sm btn-outline-primary mt-2">Learn more</button>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 animate-fade delay-3">
+                    <div class="feature-card p-4 text-center">
+                        <div class="feature-icon">
+                            <i class="bi bi-bell-fill"></i>
+                        </div>
+                        <h4 class="mb-3">Real-Time Alerts</h4>
+                        <p class="text-muted">
+                            Instant notifications to law enforcement when a wanted criminal is detected at any financial institution.
+                        </p>
+                        <button class="btn btn-sm btn-outline-primary mt-2">Learn more</button>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 animate-fade delay-1">
+                    <div class="feature-card p-4 text-center">
+                        <div class="feature-icon">
+                            <i class="bi bi-database-fill"></i>
+                        </div>
+                        <h4 class="mb-3">Centralized Database</h4>
+                        <p class="text-muted">
+                            Nationwide criminal records database with biometric data, updated in real-time by law enforcement agencies.
+                        </p>
+                        <button class="btn btn-sm btn-outline-primary mt-2">Learn more</button>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 animate-fade delay-2">
+                    <div class="feature-card p-4 text-center">
+                        <div class="feature-icon">
+                            <i class="bi bi-shield-fill-check"></i>
+                        </div>
+                        <h4 class="mb-3">Fraud Prevention</h4>
+                        <p class="text-muted">
+                            Proactively identifies and prevents fraudulent transactions before they can be completed.
+                        </p>
+                        <button class="btn btn-sm btn-outline-primary mt-2">Learn more</button>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 animate-fade delay-3">
+                    <div class="feature-card p-4 text-center">
+                        <div class="feature-icon">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <h4 class="mb-3">Analytics Dashboard</h4>
+                        <p class="text-muted">
+                            Comprehensive reporting tools to analyze criminal activity patterns and improve prevention strategies.
+                        </p>
+                        <button class="btn btn-sm btn-outline-primary mt-2">Learn more</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 mb-4 mb-lg-0 animate-fade">
+                    <img src="https://source.unsplash.com/random/600x400/?technology,security" alt="System Diagram" class="img-fluid rounded shadow">
+                </div>
+                <div class="col-lg-6 animate-fade delay-1">
+                    <h2 class="fw-bold mb-4">How Our System Works</h2>
+                    <div class="d-flex mb-3">
+                        <div class="me-4">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">1</div>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Criminal Detection</h5>
+                            <p class="text-muted mb-0">Facial recognition scans match individuals against our criminal database in real-time.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="me-4">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">2</div>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Immediate Response</h5>
+                            <p class="text-muted mb-0">Bank staff and law enforcement receive instant alerts when a match is found.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="me-4">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">3</div>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Account Protection</h5>
+                            <p class="text-muted mb-0">Linked accounts are automatically frozen to prevent fraudulent transactions.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <div class="me-4">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">4</div>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">Law Enforcement Coordination</h5>
+                            <p class="text-muted mb-0">Detailed suspect information is shared with responding officers for quick apprehension.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Trusted by Law Enforcement</h2>
+                <p class="lead text-muted">What our partners say about our system</p>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-4 mb-4 animate-fade delay-1">
+                    <div class="card h-100">
+                        <div class="card-body text-center p-4">
+                            <img src="https://source.unsplash.com/random/100x100/?police" class="rounded-circle mb-3" width="80" alt="Testimonial">
+                            <p class="mb-4">"This system has revolutionized how we track and apprehend wanted criminals. The real-time alerts have helped us make arrests we wouldn't have otherwise."</p>
+                            <h5 class="mb-1">Commissioner R. Sharma</h5>
+                            <p class="text-muted small">Mumbai Police Department</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 mb-4 animate-fade delay-2">
+                    <div class="card h-100">
+                        <div class="card-body text-center p-4">
+                            <img src="https://source.unsplash.com/random/100x100/?banker" class="rounded-circle mb-3" width="80" alt="Testimonial">
+                            <p class="mb-4">"Since implementing this system, attempted fraud at our branches has dropped by 78%. The integration with our security systems was seamless."</p>
+                            <h5 class="mb-1">A. Patel</h5>
+                            <p class="text-muted small">Chief Security Officer, National Bank</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 mb-4 animate-fade delay-3">
+                    <div class="card h-100">
+                        <div class="card-body text-center p-4">
+                            <img src="https://source.unsplash.com/random/100x100/?officer" class="rounded-circle mb-3" width="80" alt="Testimonial">
+                            <p class="mb-4">"The facial recognition accuracy is unmatched. We've been able to identify and arrest multiple suspects who had been evading capture for years."</p>
+                            <h5 class="mb-1">Inspector S. Khan</h5>
+                            <p class="text-muted small">Delhi Police Special Task Force</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="py-5 bg-primary text-white">
+        <div class="container text-center animate-fade">
+            <h2 class="fw-bold mb-4">Ready to Enhance Your Security?</h2>
+            <p class="lead mb-5">Join the growing network of financial institutions and law enforcement agencies using our system</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{{url_for('police.police_login')}}" class="btn btn-light btn-lg px-4">
+                    <i class="bi bi-shield-check me-2"></i>Police Login
+                </a>
+                <a href="{{url_for('admin.admin_login')}}" class="btn btn-outline-light btn-lg px-4">
+                    <i class="bi bi-person-badge me-2"></i>Admin Portal
+                </a>
+            </div>
+        </div>
+    </section>
+
     <!-- Footer -->
-    <footer class="text-center">
-        <p>© 2025 Criminal Detection System. All Rights Reserved. | <a href="#">Privacy Policy</a></p>
+    <footer class="py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h5 class="text-white mb-3">
+                        <i class="bi bi-shield-lock me-2"></i>Criminal Detection System
+                    </h5>
+                    <p class="text-muted">Advanced security solutions for financial institutions and law enforcement agencies.</p>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4 mb-md-0">
+                    <h5 class="text-white mb-3">Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" class="text-muted">Home</a></li>
+                        <li class="mb-2"><a href="#" class="text-muted">Features</a></li>
+                        <li class="mb-2"><a href="#" class="text-muted">About Us</a></li>
+                        <li><a href="#" class="text-muted">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-4 mb-md-0">
+                    <h5 class="text-white mb-3">Legal</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#" class="text-muted">Privacy Policy</a></li>
+                        <li class="mb-2"><a href="#" class="text-muted">Terms of Service</a></li>
+                        <li><a href="#" class="text-muted">Security</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4">
+                    <h5 class="text-white mb-3">Contact Us</h5>
+                    <ul class="list-unstyled text-muted">
+                        <li class="mb-2"><i class="bi bi-geo-alt me-2"></i> India</li>
+                        <li class="mb-2"><i class="bi bi-telephone me-2"></i> +91 9730888461</li>
+                        <li><i class="bi bi-envelope me-2"></i> contact@criminaldetection.com</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4 bg-secondary">
+            <div class="row">
+                <div class="col-md-6 text-center text-md-start text-muted">
+                    <small>© 2025 Criminal Detection System. All rights reserved.</small>
+                </div>
+                <div class="col-md-6 text-center text-md-end text-muted">
+                    <small>Designed sor law enforcement and financial security</small>
+                </div>
+            </div>
+        </div>
     </footer>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Animate stats counting
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+        
+        // Initialize animations when scrolled to stats section
+        let statsAnimated = false;
+        
+        function checkStatsVisibility() {
+            const statsSection = document.querySelector('.stats-section');
+            const position = statsSection.getBoundingClientRect();
+            
+            if (position.top < window.innerHeight && !statsAnimated) {
+                statsAnimated = true;
+                animateValue("criminalsCount", 0, 1243, 2000);
+                animateValue("fraudPrevented", 0, 892, 2000);
+                animateValue("banksProtected", 0, 156, 2000);
+                animateValue("arrestsMade", 0, 543, 2000);
+            }
+        }
+        
+        window.addEventListener('scroll', checkStatsVisibility);
+        window.addEventListener('load', checkStatsVisibility);
+        
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
 </body>
 </html>

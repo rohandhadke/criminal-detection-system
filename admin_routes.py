@@ -7,7 +7,6 @@ bcrypt = Bcrypt()
 
 
 
-
 @admin.route('/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
@@ -37,43 +36,68 @@ def admin_dashboard():
 # ADD POLICE OFFICER
 @admin.route('/admin/add_police', methods=['POST'])
 def add_police():
-    if 'admin_logged_in' not in session:
-        return redirect(url_for('admin.admin_login'))
+    if 'admin_id' not in session:
+        flash("Unauthorized access!", "danger")
+        return redirect(url_for('admin_login'))
 
-    name = request.form['name']
-    email = request.form['email']
-    password = bcrypt.generate_password_hash(request.form['password']).decode('utf-8')
+    full_name = request.form.get('name')
+    email = request.form.get('email')
+    department = request.form.get('department')
+    badge_number = request.form.get('badge_number')
+    police_station_branch = request.form.get('police_station_branch')
+    password = request.form.get('password')
 
-    db.police.insert_one({"name": name, "email": email, "password": password})
-    flash('Police Officer Added Successfully', 'success')
-    return redirect(url_for('admin.admin_dashboard'))
+    # print(full_name, email, department, badge_number, police_station_branch, password)
+
+    if not (full_name and email and department and badge_number and police_station_branch and password):
+        flash("All fields are required!", "danger")
+        return redirect(url_for('admin.admin_dashboard'))
+
+    # Hash the password
+    hashed_password = bcrypt.generate_password_hash(password)
+
+    # Insert into MongoDB
+    db['police'].insert_one({
+        "full_name": full_name,
+        "email": email,
+        "department": department,
+        "badge_number": badge_number,
+        "police_station_branch": police_station_branch,
+        "password": hashed_password
+    })
+
+    flash("Police Officer Added Successfully!", "success")
+    return redirect(url_for('admin.admin_dashboard'))  # Redirect to admin dashboard
 
 # EDIT POLICE OFFICER
 @admin.route('/admin/edit_police', methods=['POST'])
 def edit_police():
-    if 'admin_logged_in' not in session:
+    if 'admin_id' not in session:
         return redirect(url_for('admin.admin_login'))
 
     police_id = request.form['police_id']
-    name = request.form['name']
+    full_name = request.form['full_name']
     email = request.form['email']
+    department = request.form['department']
+    badge_number = request.form['badge_number']
+    police_station_branch = request.form['police_station_branch']
 
-    db.police.update_one({"_id": police_id}, {"$set": {"name": name, "email": email}})
-    flash('Police Officer Updated', 'success')
-    return redirect(url_for('admin.admin_dashboard'))
-
-# DELETE POLICE OFFICER
-@admin.route('/admin/delete_police/<police_id>')
-def delete_police(police_id):
-    if 'admin_logged_in' not in session:
-        return redirect(url_for('admin.admin_login'))
-
-    db.police.delete_one({"_id": police_id})
-    flash('Police Officer Deleted', 'success')
+    db.police.update_one(
+        {"_id": ObjectId(police_id)},
+        {"$set": {
+            "full_name": full_name,
+            "email": email,
+            "department": department,
+            "badge_number": badge_number,
+            "police_station_branch": police_station_branch
+        }}
+    )
+    flash('Police Officer Updated Successfully', 'success')
     return redirect(url_for('admin.admin_dashboard'))
 
 # ADMIN LOGOUT
-@admin.route('/admin/logout')
-def admin_logout():
-    session.pop('admin_logged_in', None)
+@admin.route('/logout')
+def logout():
+    session.clear()  # Clears all session data
+    flash("Logged out successfully!", "success")
     return redirect(url_for('admin.admin_login'))

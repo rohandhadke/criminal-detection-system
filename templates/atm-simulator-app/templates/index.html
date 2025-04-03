@@ -54,7 +54,7 @@
           <label for="pin" class="form-label">ATM PIN</label>
           <input type="password" class="form-control" id="pin" placeholder="Enter your ATM PIN" required>
         </div>
-        <button type="button" class="btn btn-primary" onclick="validatePin()">Submit</button>
+        <a href="main_menu.html"><button type="button" class="btn btn-primary" onclick="validatePin()">Submit</button></a>
         <button type="button" class="btn btn-secondary" onclick="goBackToCard()">Back</button>
       </div>
     </form>
@@ -90,6 +90,7 @@
       // Simulate PIN validation
       if (pin.length === 4 && !isNaN(pin)) {
         alert('Login successful!');
+        window.location.href('main_menu.html')
         // Redirect to main menu or further steps
       } else {
         alert('Invalid PIN. Please try again.');

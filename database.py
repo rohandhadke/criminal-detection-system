@@ -9,6 +9,8 @@ db = client["criminal-detection-system"]
 # Collections
 users_collection = db["users"]
 criminals_collection = db["criminals"]
+police_collection = db["police"]
+
 
 def create_default_admin():
     """Checks if an admin exists, if not, creates a default admin account."""
