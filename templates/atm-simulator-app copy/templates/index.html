@@ -26,11 +26,11 @@
       border-radius: 10px;
       background: #ffffff;
     }
-    .btn-primary, .btn-secondary {
+    .btn-primary, .btn-secondary, .btn-success {
       width: 100%;
       padding: 10px;
     }
-    .btn-secondary {
+    .btn-secondary, .btn-success {
       margin-top: 10px;
     }
   </style>
@@ -46,6 +46,7 @@
           <input type="text" class="form-control" id="cardNumber" placeholder="Enter your card number" required>
         </div>
         <button type="button" class="btn btn-primary" onclick="validateCard()">Next</button>
+        <button type="button" class="btn btn-success" onclick="createNewAccount()">Create New Bank Account</button>
       </div>
 
       <!-- ATM PIN Form -->
@@ -54,7 +55,7 @@
           <label for="pin" class="form-label">ATM PIN</label>
           <input type="password" class="form-control" id="pin" placeholder="Enter your ATM PIN" required>
         </div>
-        <a href="main_menu.html"><button type="button" class="btn btn-primary" onclick="validatePin()">Submit</button></a>
+        <button type="button" class="btn btn-primary" onclick="validatePin()">Submit</button>
         <button type="button" class="btn btn-secondary" onclick="goBackToCard()">Back</button>
       </div>
     </form>
@@ -90,7 +91,7 @@
       // Simulate PIN validation
       if (pin.length === 4 && !isNaN(pin)) {
         alert('Login successful!');
-        window.location.href('main_menu.html')
+        window.location.href = 'main_menu.html';
         // Redirect to main menu or further steps
       } else {
         alert('Invalid PIN. Please try again.');
@@ -102,6 +103,11 @@
       document.getElementById('pinForm').classList.add('d-none');
       document.getElementById('cardForm').classList.remove('d-none');
       document.getElementById('formTitle').innerText = 'Enter Card Number';
+    }
+
+    function createNewAccount() {
+      // Redirect to the account creation page
+      window.location.href = 'create_account.html';
     }
   </script>
 </body>
