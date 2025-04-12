@@ -2,6 +2,7 @@ from flask import Flask, render_template
 from auth import auth
 from admin_routes import admin
 from police_routes import police
+from atm_routes import atm
 import os
 
 app = Flask(__name__)
@@ -14,6 +15,7 @@ if not os.path.exists(UPLOAD_FOLDER):
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Register Blueprints
+app.register_blueprint(atm, url_prefix="/atm")
 app.register_blueprint(auth, url_prefix="/auth")
 app.register_blueprint(admin, url_prefix="/admin")
 app.register_blueprint(police, url_prefix="/police")
