@@ -138,33 +138,115 @@ def atm_logout():
     session.clear()
     return jsonify({"success": True})
 
-# Route: Face Detection API
-# @atm.route("/face_check", methods=["POST"])
-# def face_check():
-#     file = request.files["photo"]
-#     img_np = np.frombuffer(file.read(), np.uint8)
-#     img = cv2.imdecode(img_np, cv2.IMREAD_COLOR)
-#     unknown_encoding = face_recognition.face_encodings(img)
 
-#     if not unknown_encoding:
-#         return jsonify({"status": "error", "message": "Face not detected."})
 
-#     criminals = db.criminals.find()
-#     for crim in criminals:
-#         known_encoding = np.array(crim["photo_encoding"])
-#         results = face_recognition.compare_faces([known_encoding], unknown_encoding[0], tolerance=0.5)
 
-#         if results[0]:
-#             # Block user account
-#             card_number = session.get("card_number")
-#             db.users.update_one({"card_number": card_number}, {"$set": {"account_status": "blocked"}})
-#             db.alerts.insert_one({
-#                 "card_number": card_number,
-#                 "full_name": crim["full_name"],
-#                 "match_percentage": 99.0,
-#                 "message": "Criminal face detected. Account blocked.",
-#                 "alert_status": "unresolved"
-#             })
-#             return jsonify({"status": "blocked", "message": "Criminal face detected. Account blocked."})
+# ATM Transactions
 
-#     return jsonify({"status": "ok", "message": "No criminal match found."})
+
+
+# MongoDB Collections
+users_col = db.atm_users
+transactions_col = db.atm_transactions
+
+
+# Route: Deposit Money
+@atm.route("/deposit", methods=["POST"])
+@login_required
+def deposit_money():
+    data = request.get_json()
+    amount = float(data.get("amount", 0))
+    if amount <= 0:
+        return jsonify({"message": "Invalid deposit amount."})
+
+    users_col.update_one(
+        {"card_number": session["card_number"]},
+        {"$inc": {"balance": amount}}
+    )
+
+    transactions_col.insert_one({
+        "card_number": session["card_number"],
+        "type": "Deposit",
+        "amount": amount,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    return jsonify({"message": f"₹{amount} deposited successfully!"})
+
+
+# Route: Withdraw Money
+@atm.route("/withdraw", methods=["POST"])
+@login_required
+def withdraw_money():
+    data = request.get_json()
+    amount = float(data.get("amount", 0))
+    if amount <= 0:
+        return jsonify({"message": "Invalid withdraw amount."})
+
+    user = users_col.find_one({"card_number": session["card_number"]})
+    if user["balance"] < amount:
+        return jsonify({"message": "Insufficient balance!"})
+
+    users_col.update_one(
+        {"card_number": session["card_number"]},
+        {"$inc": {"balance": -amount}}
+    )
+
+    transactions_col.insert_one({
+        "card_number": session["card_number"],
+        "type": "Withdraw",
+        "amount": amount,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    })
+
+    return jsonify({"message": f"₹{amount} withdrawn successfully!"})
+
+
+# Route: Check Balance
+@atm.route("/check_balance", methods=["POST"])
+@login_required
+def check_balance():
+    user = users_col.find_one({"card_number": session["card_number"]})
+    return jsonify({"balance": user["balance"]})
+
+
+# Route: Change PIN
+@atm.route("/change_pin", methods=["POST"])
+@login_required
+def change_pin():
+    data = request.get_json()
+    old_pin = data.get("old_pin")
+    new_pin = data.get("new_pin")
+
+    user = users_col.find_one({"card_number": session["card_number"]})
+    if user["pin"] != old_pin:
+        return jsonify({"message": "Old PIN is incorrect."})
+
+    if len(new_pin) != 4 or not new_pin.isdigit():
+        return jsonify({"message": "New PIN must be a 4-digit number."})
+
+    users_col.update_one(
+        {"card_number": session["card_number"]},
+        {"$set": {"pin": new_pin}}
+    )
+
+    return jsonify({"message": "PIN changed successfully!"})
+
+
+# Route: Mini Statement (last 5 transactions)
+@atm.route("/mini_statement", methods=["POST"])
+@login_required
+def mini_statement():
+    transactions = transactions_col.find(
+        {"card_number": session["card_number"]}
+    ).sort("date", -1).limit(5)
+
+    tx_list = []
+    for tx in transactions:
+        tx_list.append({
+            "type": tx["type"],
+            "amount": tx["amount"],
+            "date": tx["date"]
+        })
+
+    return jsonify({"transactions": tx_list})
