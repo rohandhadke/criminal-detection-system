@@ -258,11 +258,6 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#">
-                        <i class="bi bi-map-fill"></i> Area-wise Criminals
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
                         <i class="bi bi-file-earmark-bar-graph"></i> Crime Reports
                     </a>
                 </li>
@@ -326,9 +321,6 @@
                             <a class="dropdown-item d-flex align-items-center" href="#">
                                 <i class="bi bi-person-fill me-2 text-primary"></i> Profile
                             </a>
-                            <a class="dropdown-item d-flex align-items-center" href="#">
-                                <i class="bi bi-gear-fill me-2 text-primary"></i> Settings
-                            </a>
                             <div class="dropdown-divider"></div>
                             <a class="dropdown-item d-flex align-items-center" href="{{ url_for('police.logout') }}">
                                 <i class="bi bi-box-arrow-right me-2 text-primary"></i> Logout
@@ -359,7 +351,7 @@
                                 <div class="col mr-2">
                                     <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                         Total Criminals</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">1,248</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_criminals}}</div>
                                 </div>
                                 <div class="col-auto">
                                     <i class="bi bi-people-fill fa-2x text-gray-300"></i>
@@ -377,7 +369,7 @@
                                 <div class="col mr-2">
                                     <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
                                         Wanted Criminals</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">56</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{wanted_criminals }}</div>
                                 </div>
                                 <div class="col-auto">
                                     <i class="bi bi-exclamation-triangle-fill fa-2x text-gray-300"></i>
@@ -395,7 +387,7 @@
                                 <div class="col mr-2">
                                     <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                         Arrested Criminals</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">892</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{arrested_criminals}}</div>
                                 </div>
                                 <div class="col-auto">
                                     <i class="bi bi-check-circle-fill fa-2x text-gray-300"></i>
@@ -412,8 +404,8 @@
                             <div class="row no-gutters align-items-center">
                                 <div class="col mr-2">
                                     <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                        Recent Cases (7 days)</div>
-                                    <div class="h5 mb-0 font-weight-bold text-gray-800">24</div>
+                                        Suspect Criminals</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{suspect_criminals}}</div>
                                 </div>
                                 <div class="col-auto">
                                     <i class="bi bi-clock-history fa-2x text-gray-300"></i>
@@ -433,10 +425,10 @@
                             <i class="bi bi-three-dots-vertical text-gray-400"></i>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right shadow">
-                            <a class="dropdown-item" href="#">Export Records</a>
-                            <a class="dropdown-item" href="#">Print List</a>
+                            <a class="dropdown-item" href="{{ url_for('police.export_criminal_records') }}">Export Records</a>
+                            <a class="dropdown-item" href="#" onclick="printCriminalRecords()">Print List</a>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="#">Refresh Data</a>
+                            <a class="dropdown-item" href="#" onclick="location.reload();">Refresh Data</a>
                         </div>
                     </div>
                 </div>
@@ -457,9 +449,9 @@
                             <tbody>
                                 {% for criminal in criminals %}
                                 <tr>
-                                    <td>
-                                        <img src="{{ url_for('police.get_photo', photo_id=criminal['photo']) }}" class="criminal-photo" alt="Criminal Photo">
-                                    </td>
+                                <td>
+                                    <img src="{{ url_for('static', filename=criminal['photo_path'].replace('static/', '')) }}" class="criminal-photo" alt="Criminal Photo">
+                                </td>
                                     <td>{{ criminal['name'] }}</td>
                                     <td>{{ criminal['age'] }}</td>
                                     <td>{{ criminal['aadhaar'][:4] }}-XXXX-{{ criminal['aadhaar'][-4:] }}</td>
@@ -472,7 +464,7 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <button class="btn btn-sm btn-primary me-1">
+                                        <button class="btn btn-sm btn-primary me-1" onclick="window.open('{{ url_for('police.criminal_profile', criminal_id=criminal['_id']) }}', '_blank')">
                                             <i class="bi bi-eye-fill"></i> View
                                         </button>
                                         <button class="btn btn-sm btn-warning">
@@ -487,21 +479,6 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Pagination -->
-            <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" tabindex="-1">Previous</a>
-                    </li>
-                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
-                </ul>
-            </nav>
         </div>
     </div>
 
@@ -657,6 +634,63 @@
                 }
             });
         });
+        function printCriminalRecords() {
+            const printableContent = document.querySelector('.table-responsive').innerHTML;
+            
+            const printWindow = window.open('', '', 'height=700,width=900');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Criminal Record Data</title>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                margin: 40px;
+                            }
+                            h2 {
+                                text-align: center;
+                                margin-bottom: 30px;
+                            }
+                            table {
+                                width: 100%;
+                                border-collapse: collapse;
+                            }
+                            th, td {
+                                padding: 10px;
+                                text-align: left;
+                                border: 1px solid #ccc;
+                            }
+                            img {
+                                width: 60px;
+                                height: 60px;
+                                object-fit: cover;
+                            }
+                            .badge {
+                                padding: 5px 10px;
+                                border-radius: 5px;
+                                color: #fff;
+                                font-size: 12px;
+                            }
+                            .badge-wanted {
+                                background-color: #dc3545;
+                            }
+                            .badge-arrested {
+                                background-color: #28a745;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <h2>Criminal Record Data</h2>
+                        ${printableContent}
+                    </body>
+                </html>
+            `);
+        
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+            printWindow.close();
+        }
     </script>
 </body>
 </html>

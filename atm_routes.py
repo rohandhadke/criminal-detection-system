@@ -250,3 +250,8 @@ def mini_statement():
         })
 
     return jsonify({"transactions": tx_list})
+
+
+@atm.route("/blocked", methods=["GET"])
+def show_account_blocked():
+    return render_template("atm-simulation/atm_blocked.html")
