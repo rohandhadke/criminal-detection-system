@@ -7,6 +7,7 @@ from datetime import datetime
 import os
 import pandas as pd
 from io import BytesIO
+from face_recognition.train_from_photos import train
 
 bcrypt = Bcrypt()
 
@@ -153,6 +154,7 @@ def add_criminal():
         }
 
         db.criminals.insert_one(criminal_data)
+        train()
         flash("Criminal added successfully", "success")
         return redirect(url_for('police.police_dashboard'))
 
@@ -208,6 +210,8 @@ def criminal_record():
     for criminal in criminals:
         criminal['_id'] = str(criminal['_id'])  # Convert ObjectId to string
         criminal_list.append(criminal)
+    
+    # print(criminal_list)
 
     return render_template('criminal_record.html', criminals=criminal_list)
 

@@ -1,7 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, session, flash, jsonify, send_file
 from pymongo import MongoClient
-# import face_recognition
-# import cv2
 import numpy as np
 import os
 from datetime import datetime
@@ -10,6 +8,7 @@ from functools import wraps
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 import os
+from face_recognition.face_matcher import recognize_face_from_webcam
 
 atm = Blueprint("atm", __name__)
 client = MongoClient("mongodb://localhost:27017/")
@@ -58,10 +57,39 @@ def atm_login():
     user = db.atm_users.find_one({"card_number": card_number})
     if user and user["pin"] == pin:
         if user["account_status"] == "blocked":
-            return jsonify({"success": False, "blocked": True})
-        
+            return jsonify({
+                "success": False,
+                "blocked": True,
+                "message": "Your account is blocked due to criminal match."
+            })
+
+        # Step 1: Use webcam to capture and match
+        criminal_name = recognize_face_from_webcam()
+        if criminal_name:
+            # Step 2: If matched, block the account
+            db.atm_users.update_one(
+                {"card_number": card_number},
+                {"$set": {"account_status": "blocked"}}
+            )
+            aadhaar_number = user.get("aadhaar")
+            if aadhaar_number:
+                print(aadhaar_number)
+                db.criminals.update_one(
+                    {"aadhaar_number": aadhaar_number},
+                    {"$set": {"bank_status": "blocked"}}
+                )
+            else:
+                print("not getting adhar number")
+                
+            return jsonify({
+                "success": False,
+                "blocked": True,
+                "message": f"Your account is blocked because your face matched a criminal profile ({criminal_name}). Please contact the police station."
+            })
+
+        # Step 3: Allow login
         session["card_number"] = card_number
-        return jsonify({"success": True})
+        return jsonify({"success": True, "blocked": False})
     else:
         return jsonify({"success": False, "blocked": False})
 

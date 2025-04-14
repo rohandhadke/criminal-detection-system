@@ -1,1 +1,77 @@
-<h1>ATM Blocked Because of your face is detected as criminal so please visit nearby police station to resolve your case</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ATM Access Blocked</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            padding: 40px;
+            text-align: center;
+        }
+        .card h1 {
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+        .card p {
+            font-size: 18px;
+            color: #343a40;
+            line-height: 1.6;
+        }
+        .card .police-warning {
+            margin-top: 20px;
+            color: #6c757d;
+            font-size: 14px;
+            font-style: italic;
+        }
+        .icon {
+            font-size: 50px;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+        .back-button {
+            margin-top: 30px;
+        }
+        .back-button button {
+            background-color: #dc3545;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .back-button button:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">🚫</div>
+        <h1>Bank Access Blocked</h1>
+        <p>Your face has been detected and matched with a criminal record in our system.</p>
+        <p>As a result, your Bank access has been <strong>temporarily blocked</strong>.</p>
+        <p class="police-warning">Please visit your nearest police station to resolve your case and regain access to banking services.</p>
+        
+        <div class="back-button">
+            <a href="{{url_for('atm.atm_home')}}"><button onclick="">← Back</button></a>
+        </div>
+    </div>
+</body>
+</html>
