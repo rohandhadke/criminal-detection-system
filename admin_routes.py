@@ -100,4 +100,4 @@ def edit_police():
 def logout():
     session.clear()  # Clears all session data
     flash("Logged out successfully!", "success")
-    return redirect(url_for('admin.admin_login'))
+    return redirect(url_for('home'))

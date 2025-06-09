@@ -55,7 +55,7 @@ def logout():
     session.pop('police_name', None)
     session.pop('police_department', None)
     flash("Logged out successfully!", "success")
-    return redirect(url_for('police.police_login'))
+    return redirect(url_for('home'))
 
 @police.route('/dashboard')
 def police_dashboard():

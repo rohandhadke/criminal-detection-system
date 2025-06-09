@@ -63,10 +63,8 @@ def atm_login():
                 "message": "Your account is blocked due to criminal match."
             })
 
-        # Step 1: Use webcam to capture and match
         criminal_name = recognize_face_from_webcam()
         if criminal_name:
-            # Step 2: If matched, block the account
             db.atm_users.update_one(
                 {"card_number": card_number},
                 {"$set": {"account_status": "blocked"}}
@@ -80,18 +78,18 @@ def atm_login():
                 )
             else:
                 print("not getting adhar number")
-                
+
             return jsonify({
                 "success": False,
                 "blocked": True,
                 "message": f"Your account is blocked because your face matched a criminal profile ({criminal_name}). Please contact the police station."
             })
 
-        # Step 3: Allow login
         session["card_number"] = card_number
         return jsonify({"success": True, "blocked": False})
     else:
         return jsonify({"success": False, "blocked": False})
+
 
 def generate_card_number():
     while True:
@@ -133,23 +131,18 @@ def create_account():
     }
 
     db.atm_users.insert_one(user_data)
-        # Create PDF directory if it doesn't exist
     pdf_dir = os.path.join("static", "passbooks")
     os.makedirs(pdf_dir, exist_ok=True)
 
-    # Generate PDF file
     pdf_filename = f"{pdf_dir}/passbook_{card_number}.pdf"
     generate_passbook_pdf(user_data, pdf_filename)
 
     return jsonify({
         "message": "Account created successfully!",
         "card_number": card_number,
-        "passbook_url": f"/{pdf_filename}"  # You can open/download it from this URL
+        "passbook_url": f"/{pdf_filename}" 
     }), 201
 
-    # return jsonify({"message": "Account created successfully!", "card_number": card_number}), 201
-
-# Route: Dashboard
 @atm.route("/main_menu")
 @login_required
 def main_menu():
