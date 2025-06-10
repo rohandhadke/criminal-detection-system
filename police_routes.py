@@ -204,16 +204,19 @@ def edit_criminal(criminal_id):
 @police.route('/criminals/all')
 def criminal_record():
     # Fetch all criminal records from MongoDB
-    criminals = db.criminals.find()
-    criminal_list = []
-
-    for criminal in criminals:
-        criminal['_id'] = str(criminal['_id'])  # Convert ObjectId to string
-        criminal_list.append(criminal)
+    criminals = list(db.criminals.find())
     
-    # print(criminal_list)
-
-    return render_template('criminal_record.html', criminals=criminal_list)
+    # Format dates and handle missing values
+    for criminal in criminals:
+        if 'registered_on' in criminal:
+            if isinstance(criminal['registered_on'], str):
+                # If it's already a string, use it as is
+                continue
+            else:
+                # If it's a datetime object, format it
+                criminal['registered_on'] = criminal['registered_on'].strftime('%Y-%m-%d %H:%M:%S')
+    
+    return render_template('criminal_record.html', criminals=criminals)
 
 @police.route('/criminal/profile/<criminal_id>')
 def criminal_profile(criminal_id):
@@ -335,3 +338,441 @@ def export_criminal_records():
         as_attachment=True,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
+
+@police.route('/api/criminals/<criminal_id>', methods=['GET'])
+def get_criminal(criminal_id):
+    if 'police_id' not in session:
+        return jsonify({
+            'success': False,
+            'message': 'Authentication required'
+        }), 401
+
+    try:
+        criminal = db.criminals.find_one({"_id": ObjectId(criminal_id)})
+        if not criminal:
+            return jsonify({
+                'success': False,
+                'message': 'Criminal not found'
+            }), 404
+
+        # Convert ObjectId to string for JSON serialization
+        criminal['_id'] = str(criminal['_id'])
+        
+        return jsonify({
+            'success': True,
+            'data': criminal
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@police.route('/api/criminals/<criminal_id>/update/<section>', methods=['POST'])
+def update_criminal_section(criminal_id, section):
+    if 'police_id' not in session:
+        return jsonify({
+            'success': False,
+            'message': 'Authentication required'
+        }), 401
+
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'success': False,
+                'message': 'No data provided'
+            }), 400
+
+        criminal_id = ObjectId(criminal_id)
+        
+        # Define update fields for each section
+        update_fields = {
+            'personal': {
+                'name': data.get('name'),
+                'gender': data.get('gender'),
+                'nationality': data.get('nationality'),
+                'dob': data.get('dob'),
+                'age': data.get('age'),
+                'aadhaar': data.get('aadhaar')
+            },
+            'physical': {
+                'height': data.get('height'),
+                'weight': data.get('weight'),
+                'hair_color': data.get('hair_color'),
+                'eye_color': data.get('eye_color'),
+                'distinguishing_marks': data.get('distinguishing_marks')
+            },
+            'contact': {
+                'permanent_address': data.get('permanent_address'),
+                'last_known_address': data.get('last_known_address'),
+                'phone_numbers': data.get('phone_numbers', []),
+                'email_addresses': data.get('email_addresses', [])
+            },
+            'criminal': {
+                'status': data.get('status'),
+                'bank_status': data.get('bank_status'),
+                'primary_crime_type': data.get('primary_crime_type'),
+                'fir_number': data.get('fir_number'),
+                'modus_operandi': data.get('modus_operandi'),
+                'case_status': data.get('case_status'),
+                'last_arrest_date': data.get('last_arrest_date')
+            },
+            'timeline': {
+                'timeline': data.get('timeline', [])
+            }
+        }
+
+        if section not in update_fields:
+            return jsonify({
+                'success': False,
+                'message': 'Invalid section'
+            }), 400
+
+        # Remove None values from the update data
+        update_data = {k: v for k, v in update_fields[section].items() if v is not None}
+
+        if not update_data:
+            return jsonify({
+                'success': False,
+                'message': 'No valid data to update'
+            }), 400
+
+        # Update the criminal record
+        result = db.criminals.update_one(
+            {'_id': criminal_id},
+            {'$set': update_data}
+        )
+
+        if result.modified_count == 0:
+            return jsonify({
+                'success': False,
+                'message': 'No changes were made'
+            }), 400
+
+        # Log the update
+        update_log = {
+            'criminal_id': criminal_id,
+            'police_id': ObjectId(session['police_id']),
+            'section': section,
+            'updated_fields': list(update_data.keys()),
+            'timestamp': datetime.now()
+        }
+        db.update_logs.insert_one(update_log)
+
+        return jsonify({
+            'success': True,
+            'message': f'{section.capitalize()} information updated successfully'
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@police.route('/api/criminals/<criminal_id>/update/timeline', methods=['POST'])
+def update_criminal_timeline(criminal_id):
+    if 'police_id' not in session:
+        return jsonify({
+            'success': False,
+            'message': 'Authentication required'
+        }), 401
+
+    try:
+        data = request.get_json()
+        criminal_id = ObjectId(criminal_id)
+        
+        # Validate timeline data
+        timeline = data.get('timeline', [])
+        if not isinstance(timeline, list):
+            return jsonify({
+                'success': False,
+                'message': 'Timeline must be a list of events'
+            }), 400
+
+        # Update the criminal record
+        result = db.criminals.update_one(
+            {'_id': criminal_id},
+            {'$set': {'timeline': timeline}}
+        )
+
+        if result.modified_count == 0:
+            return jsonify({
+                'success': False,
+                'message': 'No changes were made'
+            }), 400
+
+        # Log the update
+        update_log = {
+            'criminal_id': criminal_id,
+            'police_id': ObjectId(session['police_id']),
+            'section': 'timeline',
+            'updated_fields': ['timeline'],
+            'timestamp': datetime.now()
+        }
+        db.update_logs.insert_one(update_log)
+
+        return jsonify({
+            'success': True,
+            'message': 'Timeline updated successfully'
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@police.route('/api/criminals/<criminal_id>/update/associates', methods=['POST'])
+def update_criminal_associates(criminal_id):
+    if 'police_id' not in session:
+        return jsonify({
+            'success': False,
+            'message': 'Authentication required'
+        }), 401
+
+    try:
+        data = request.get_json()
+        criminal_id = ObjectId(criminal_id)
+        
+        # Validate associates data
+        associates = data.get('associates', [])
+        if not isinstance(associates, list):
+            return jsonify({
+                'success': False,
+                'message': 'Associates must be a list'
+            }), 400
+
+        # Update the criminal record
+        result = db.criminals.update_one(
+            {'_id': criminal_id},
+            {'$set': {'associates': associates}}
+        )
+
+        if result.modified_count == 0:
+            return jsonify({
+                'success': False,
+                'message': 'No changes were made'
+            }), 400
+
+        # Log the update
+        update_log = {
+            'criminal_id': criminal_id,
+            'police_id': ObjectId(session['police_id']),
+            'section': 'associates',
+            'updated_fields': ['associates'],
+            'timestamp': datetime.now()
+        }
+        db.update_logs.insert_one(update_log)
+
+        return jsonify({
+            'success': True,
+            'message': 'Associates updated successfully'
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@police.route('/api/criminals/<criminal_id>/update/evidence', methods=['POST'])
+def update_criminal_evidence(criminal_id):
+    if 'police_id' not in session:
+        return jsonify({
+            'success': False,
+            'message': 'Authentication required'
+        }), 401
+
+    try:
+        data = request.get_json()
+        criminal_id = ObjectId(criminal_id)
+        
+        # Validate evidence data
+        evidence = data.get('evidence', [])
+        if not isinstance(evidence, list):
+            return jsonify({
+                'success': False,
+                'message': 'Evidence must be a list'
+            }), 400
+
+        # Update the criminal record
+        result = db.criminals.update_one(
+            {'_id': criminal_id},
+            {'$set': {'evidence': evidence}}
+        )
+
+        if result.modified_count == 0:
+            return jsonify({
+                'success': False,
+                'message': 'No changes were made'
+            }), 400
+
+        # Log the update
+        update_log = {
+            'criminal_id': criminal_id,
+            'police_id': ObjectId(session['police_id']),
+            'section': 'evidence',
+            'updated_fields': ['evidence'],
+            'timestamp': datetime.now()
+        }
+        db.update_logs.insert_one(update_log)
+
+        return jsonify({
+            'success': True,
+            'message': 'Evidence updated successfully'
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@police.route('/api/criminals/<criminal_id>/update/case', methods=['POST'])
+def update_criminal_case(criminal_id):
+    if 'police_id' not in session:
+        return jsonify({
+            'success': False,
+            'message': 'Authentication required'
+        }), 401
+
+    try:
+        data = request.get_json()
+        criminal_id = ObjectId(criminal_id)
+        
+        # Validate case data
+        if not isinstance(data, dict):
+            return jsonify({
+                'success': False,
+                'message': 'Invalid data format'
+            }), 400
+
+        # Prepare update data
+        update_data = {
+            'case_number': data.get('case_number'),
+            'case_status': data.get('case_status'),
+            'case_description': data.get('case_description'),
+            'fir_number': data.get('fir_number'),
+            'case_filed_date': data.get('case_filed_date'),
+            'investigating_officers': data.get('investigating_officers', []),
+            'police_actions': data.get('police_actions', []),
+            'evidence': data.get('evidence', [])
+        }
+
+        # Remove None values
+        update_data = {k: v for k, v in update_data.items() if v is not None}
+
+        # Update the criminal record
+        result = db.criminals.update_one(
+            {'_id': criminal_id},
+            {'$set': update_data}
+        )
+
+        if result.modified_count == 0:
+            return jsonify({
+                'success': False,
+                'message': 'No changes were made'
+            }), 400
+
+        # Log the update
+        update_log = {
+            'criminal_id': criminal_id,
+            'police_id': ObjectId(session['police_id']),
+            'section': 'case',
+            'updated_fields': list(update_data.keys()),
+            'timestamp': datetime.now()
+        }
+        db.update_logs.insert_one(update_log)
+
+        return jsonify({
+            'success': True,
+            'message': 'Case details updated successfully'
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@police.route('/api/police/officers', methods=['GET'])
+def get_available_officers():
+    if 'police_id' not in session:
+        return jsonify({
+            'success': False,
+            'message': 'Authentication required'
+        }), 401
+
+    try:
+        # Fetch all active police officers
+        officers = list(db.police.find(
+            {'status': 'active'},
+            {
+                'full_name': 1,
+                'badge_number': 1,
+                'department': 1,
+                'rank': 1,
+                '_id': 0  # Exclude _id from response
+            }
+        ))
+        
+        return jsonify({
+            'success': True,
+            'officers': officers
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@police.route('/officer/profile/<badge_number>')
+def officer_profile(badge_number):
+    # Fetch officer information
+    officer = db['police'].find_one({'badge_number': badge_number})
+    if not officer:
+        flash('Officer not found', 'error')
+        return redirect(url_for('police.police_dashboard'))
+    
+    # Convert ObjectId to string
+    officer['_id'] = str(officer['_id'])
+    
+    # Calculate statistics
+    stats = {
+        'cases_handled': db.criminals.count_documents({'registered_by': badge_number}),
+        'arrests_made': db.criminals.count_documents({'status': 'Arrested', 'arrested_by': badge_number}),
+        'criminals_added': db.criminals.count_documents({'registered_by': badge_number})
+    }
+    officer['stats'] = stats
+    
+    # Fetch recent activity
+    recent_activity = list(db.officer_activity.find(
+        {'badge_number': badge_number}
+    ).sort('date', -1).limit(5))
+    
+    # Convert dates to strings
+    for activity in recent_activity:
+        activity['date'] = activity['date'].strftime('%Y-%m-%d %H:%M:%S')
+    
+    officer['recent_activity'] = recent_activity
+    
+    # Fetch criminals added by this officer
+    criminals = list(db.criminals.find({'registered_by': badge_number}).sort('registered_on', -1))
+    
+    # Convert ObjectId to string and format dates
+    for criminal in criminals:
+        criminal['_id'] = str(criminal['_id'])
+        if 'registered_on' in criminal:
+            if isinstance(criminal['registered_on'], str):
+                continue
+            else:
+                criminal['registered_on'] = criminal['registered_on'].strftime('%Y-%m-%d %H:%M:%S')
+    
+    return render_template('police_profile.html', officer=officer, criminals=criminals)
+
+
+

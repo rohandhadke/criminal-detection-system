@@ -271,7 +271,7 @@
             
             <ul class="nav flex-column mb-4">
                 <li class="nav-item">
-                    <a class="nav-link" href="#">
+                    <a class="nav-link" href="{{ url_for('police.officer_profile', badge_number=police.badge_number) }}">
                         <i class="bi bi-person-circle"></i> My Profile
                     </a>
                 </li>
@@ -318,7 +318,7 @@
                                 width="40" height="40">
                         </a>
                         <div class="dropdown-menu dropdown-menu-end border-0 shadow" aria-labelledby="userDropdown">
-                            <a class="dropdown-item d-flex align-items-center" href="#">
+                            <a class="dropdown-item d-flex align-items-center" href="{{ url_for('police.officer_profile', badge_number=police.badge_number) }}">
                                 <i class="bi bi-person-fill me-2 text-primary"></i> Profile
                             </a>
                             <div class="dropdown-divider"></div>
@@ -450,7 +450,11 @@
                                 {% for criminal in criminals %}
                                 <tr>
                                 <td>
+                                    {% if criminal.get('photo_path') %}
                                     <img src="{{ url_for('static', filename=criminal['photo_path'].replace('static/', '')) }}" class="criminal-photo" alt="Criminal Photo">
+                                    {% else %}
+                                        <span class="text-muted">No photo</span>
+                                    {% endif %}
                                 </td>
                                     <td>{{ criminal['name'] }}</td>
                                     <td>{{ criminal['age'] }}</td>
@@ -464,11 +468,8 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <button class="btn btn-sm btn-primary me-1" onclick="window.open('{{ url_for('police.criminal_profile', criminal_id=criminal['_id']) }}', '_blank')">
+                                        <button class="btn btn-sm btn-primary me-1" onclick="window.open(`{{ url_for('police.criminal_profile', criminal_id=criminal['_id']) }}`, '_blank')">
                                             <i class="bi bi-eye-fill"></i> View
-                                        </button>
-                                        <button class="btn btn-sm btn-warning">
-                                            <i class="bi bi-pencil-fill"></i> Edit
                                         </button>
                                     </td>
                                 </tr>

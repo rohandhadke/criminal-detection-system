@@ -236,10 +236,10 @@
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
                 <h1 class="h3 mb-0 text-gray-800">Criminal Records</h1>
                 <div>
-                    <button class="btn btn-primary me-2">
-                        <i class="bi bi-funnel"></i> Filter
+                    <button class="btn btn-primary me-2" onclick="filterRecentCriminals()">
+                        <i class="bi bi-funnel"></i> Filter Recent
                     </button>
-                    <button class="btn btn-success">
+                    <button class="btn btn-success" onclick="exportToExcel()">
                         <i class="bi bi-download"></i> Export
                     </button>
                 </div>
@@ -266,10 +266,11 @@
                                 <tr>
                                     <th>Photo</th>
                                     <th>Name</th>
+                                    <th>Age</th>
                                     <th>Aadhaar No</th>
-                                    <th>Crime Type</th>
+                                    <th>Address</th>
                                     <th>Status</th>
-                                    <th>Bank Status</th>
+                                    <th>Registered On</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -277,43 +278,28 @@
                                 {% for criminal in criminals %}
                                 <tr>
                                     <td>
+                                        {% if criminal.get('photo_path') %}
                                         <img src="{{ url_for('static', filename=criminal['photo_path'].replace('static/', '')) }}" class="criminal-photo" alt="Criminal Photo">
-                                    </td>
-                                    <td>
-                                        <strong>{{ criminal['name'] }}</strong>
-                                        <div class="text-muted small">Age: {{ criminal['age'] }}</div>
-                                    </td>
-                                    <td>{{ criminal['aadhaar'] }}</td>
-                                    <td>{{ criminal['crime_type'] }}</td>
-                                    <td>
-                                        {% if criminal['status'] == 'Wanted' %}
-                                            <span class="badge badge-wanted">Wanted</span>
-                                        {% elif criminal['status'] == 'Arrested' %}
-                                            <span class="badge badge-arrested">Arrested</span>
                                         {% else %}
-                                            <span class="badge bg-secondary">{{ criminal['status'] }}</span>
+                                        <span class="text-muted">No photo</span>
                                         {% endif %}
                                     </td>
+                                    <td>{{ criminal['name'] }}</td>
+                                    <td>{{ criminal['age'] }}</td>
+                                    <td>{{ criminal['aadhaar'][:4] }}-XXXX-{{ criminal['aadhaar'][-4:] }}</td>
+                                    <td>{{ criminal['city'] }}, {{ criminal['state'] }}</td>
                                     <td>
-                                        {% if criminal['bank_status'] == 'active' %}
-                                            <span class="badge bg-success">Active</span>
-                                        {% else %}
-                                            <span class="badge bg-danger">Blocked</span>
-                                        {% endif %}
+                                        <span class="badge {% if criminal['status'] == 'Wanted' %} badge-wanted 
+                                            {% elif criminal['status'] == 'Arrested' %} badge-arrested 
+                                            {% else %} badge-suspect {% endif %}">
+                                            {{ criminal['status'] }}
+                                        </span>
                                     </td>
+                                    <td>{{ criminal.get('registered_on', 'N/A') }}</td>
                                     <td>
-                                        <button class="btn btn-sm btn-primary me-1" onclick="window.open('{{ url_for('police.criminal_profile', criminal_id=criminal['_id']) }}', '_blank')">
+                                        <button class="btn btn-sm btn-primary me-1" onclick="window.open(`{{ url_for('police.criminal_profile', criminal_id=criminal['_id']) }}`, '_blank')">
                                             <i class="bi bi-eye-fill"></i> View
                                         </button>
-                                        {% if criminal['bank_status'] == 'active' %}
-                                            <button class="btn btn-sm btn-danger" onclick="blockBankAccount('{{ criminal['aadhaar_no'] }}')">
-                                                <i class="bi bi-credit-card"></i> Block Bank
-                                            </button>
-                                        {% else %}
-                                            <button class="btn btn-sm btn-secondary" disabled>
-                                                <i class="bi bi-credit-card"></i> Already Blocked
-                                            </button>
-                                        {% endif %}
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -547,6 +533,58 @@
             printWindow.focus();
             printWindow.print();
             printWindow.close();
+        }
+
+        function filterRecentCriminals() {
+            const rows = document.querySelectorAll('tbody tr');
+            const now = new Date();
+            
+            rows.forEach(row => {
+                const dateCell = row.querySelector('td:nth-child(6)'); // Adjust index based on your date column
+                if (dateCell) {
+                    const criminalDate = new Date(dateCell.textContent);
+                    const daysDiff = Math.floor((now - criminalDate) / (1000 * 60 * 60 * 24));
+                    
+                    // Show only criminals added in the last 30 days
+                    row.style.display = daysDiff <= 30 ? '' : 'none';
+                }
+            });
+        }
+
+        function exportToExcel() {
+            // Get the table data
+            const table = document.querySelector('table');
+            const rows = Array.from(table.querySelectorAll('tr'));
+            
+            // Create CSV content
+            let csvContent = "data:text/csv;charset=utf-8,";
+            
+            // Add headers
+            const headers = Array.from(rows[0].querySelectorAll('th'))
+                .map(header => header.textContent.trim());
+            csvContent += headers.join(',') + '\r\n';
+            
+            // Add data rows
+            rows.slice(1).forEach(row => {
+                const rowData = Array.from(row.querySelectorAll('td'))
+                    .map(cell => {
+                        // Remove any HTML and escape commas
+                        let text = cell.textContent.trim();
+                        return `"${text.replace(/"/g, '""')}"`;
+                    });
+                csvContent += rowData.join(',') + '\r\n';
+            });
+            
+            // Create download link
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', 'criminal_records.csv');
+            document.body.appendChild(link);
+            
+            // Trigger download
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>
