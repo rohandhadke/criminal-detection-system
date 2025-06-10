@@ -257,8 +257,8 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <i class="bi bi-file-earmark-bar-graph"></i> Crime Reports
+                    <a class="nav-link" href="{{url_for('police.detected_criminals')}}">
+                        <i class="bi bi-file-earmark-bar-graph"></i> Live ATM Detection
                     </a>
                 </li>
             </ul>
@@ -598,6 +598,27 @@
         </div>
     </div>
 
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="detectionToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-danger text-white">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <strong class="me-auto">New Criminal Detection</strong>
+                <small class="text-white" id="detectionTime">Just now</small>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                <div class="d-flex align-items-center">
+                    <img id="detectionImage" src="" class="rounded me-2" style="width: 50px; height: 50px; object-fit: cover;">
+                    <div>
+                        <p class="mb-0" id="detectionName"></p>
+                        <small class="text-muted" id="detectionLocation"></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Toggle sidebar on mobile
@@ -692,6 +713,98 @@
             printWindow.print();
             printWindow.close();
         }
+
+        // Function to format relative time
+        function getRelativeTimeString(date) {
+            const now = new Date();
+            const diffInSeconds = Math.floor((now - date) / 1000);
+            
+            if (diffInSeconds < 60) {
+                return 'Just now';
+            }
+            
+            const diffInMinutes = Math.floor(diffInSeconds / 60);
+            if (diffInMinutes < 60) {
+                return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+            }
+            
+            const diffInHours = Math.floor(diffInMinutes / 60);
+            if (diffInHours < 24) {
+                return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+            }
+            
+            const diffInDays = Math.floor(diffInHours / 24);
+            if (diffInDays < 7) {
+                return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+            }
+            
+            return date.toLocaleDateString();
+        }
+
+        // Function to update relative time
+        function updateRelativeTime(detectionTime) {
+            const timeElement = document.getElementById('detectionTime');
+            const detectionDate = new Date(detectionTime);
+            
+            // Update time immediately
+            timeElement.textContent = getRelativeTimeString(detectionDate);
+            
+            // Update time every minute
+            const timeUpdateInterval = setInterval(() => {
+                timeElement.textContent = getRelativeTimeString(detectionDate);
+            }, 60000); // Update every minute
+            
+            // Clear interval when toast is hidden
+            const toast = document.getElementById('detectionToast');
+            toast.addEventListener('hidden.bs.toast', () => {
+                clearInterval(timeUpdateInterval);
+            });
+        }
+
+        // Function to show detection toast
+        function showDetectionToast(detection) {
+            const toast = document.getElementById('detectionToast');
+            const detectionImage = document.getElementById('detectionImage');
+            const detectionName = document.getElementById('detectionName');
+            const detectionLocation = document.getElementById('detectionLocation');
+
+            // Update toast content
+            detectionImage.src = `/static/${detection.image_path.replace('static/', '')}`;
+            detectionName.textContent = `Criminal detected: ${detection.atm_user_details.full_name}`;
+            detectionLocation.textContent = `Location: ${detection.detection_location.local_ip}`;
+            
+            // Update and start real-time time updates
+            updateRelativeTime(detection.detection_time);
+
+            // Show toast
+            const bsToast = new bootstrap.Toast(toast, {
+                autohide: true,
+                delay: 5000
+            });
+            bsToast.show();
+
+            // Play notification sound
+            const audio = new Audio('/static/notification.mp3');
+            audio.play();
+        }
+
+        // Function to check for new detections
+        function checkNewDetections() {
+            fetch('/police/check-new-detections')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.hasNewDetection) {
+                        showDetectionToast(data.detection);
+                    }
+                })
+                .catch(error => console.error('Error checking for new detections:', error));
+        }
+
+        // Check for new detections every 10 seconds
+        setInterval(checkNewDetections, 10000);
+
+        // Initial check
+        checkNewDetections();
     </script>
 </body>
 </html>

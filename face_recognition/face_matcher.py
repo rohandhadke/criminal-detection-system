@@ -1,7 +1,14 @@
+from datetime import datetime
 import cv2
 import pickle
 import os
 import time
+import pymongo
+from pymongo import MongoClient
+
+# Initialize MongoDB connection
+client = MongoClient('mongodb://localhost:27017/')
+db = client['criminal_detection_system']
 
 def recognize_face_from_webcam(timeout=10):
     recognizer = cv2.face.LBPHFaceRecognizer_create()
@@ -42,6 +49,30 @@ def recognize_face_from_webcam(timeout=10):
                 name = labels[id_]
                 print(f"[MATCH] Face matched with: {name} (Confidence: {conf:.2f})")
                 detected_criminal = name
+                
+                # Save the detected criminal's image
+                detected_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'detected_criminals')
+                os.makedirs(detected_dir, exist_ok=True)
+                
+                # Get the next number for the filename
+                existing_files = [f for f in os.listdir(detected_dir) if f.startswith('detected_') and f.endswith('.jpg')]
+                if existing_files:
+                    numbers = [int(f.split('_')[1].split('.')[0]) for f in existing_files]
+                    next_num = max(numbers) + 1
+                else:
+                    next_num = 1
+                
+                # Create new filename with the next number
+                filename = f"detected_{next_num}.jpg"
+                filepath = os.path.join('static', 'detected_criminals', filename).replace('\\', '/')
+                
+                # Save the frame with the detected face
+                cv2.imwrite(os.path.join(detected_dir, filename), frame)
+                print(f"[INFO] Saved detected criminal image to: {filepath}")
+                
+                print("filepath from face_matcher.py", filepath)
+                print("filename from face_matcher.py", filename)
+                
                 cam.release()
                 cv2.destroyAllWindows()
                 return detected_criminal

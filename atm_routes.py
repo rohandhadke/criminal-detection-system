@@ -8,11 +8,68 @@ from functools import wraps
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 import os
+import socket
+import requests
 from face_recognition.face_matcher import recognize_face_from_webcam
 
 atm = Blueprint("atm", __name__)
 client = MongoClient("mongodb://localhost:27017/")
 db = client["criminal-detection-system"]
+
+def get_ip_address():
+    """Get the IP address of the current system"""
+    try:
+        # Get local IP
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        
+        # Get public IP
+        public_ip = requests.get('https://api.ipify.org').text
+        
+        return {
+            "local_ip": local_ip,
+            "public_ip": public_ip
+        }
+    except Exception as e:
+        print(f"Error getting IP address: {e}")
+        return {
+            "local_ip": "unknown",
+            "public_ip": "unknown"
+        }
+
+def store_detected_criminal(atm_user, image_path):
+    """Store ATM user details and image path in detected_criminals collection"""
+    try:
+        # Get IP address information
+        ip_info = get_ip_address()
+
+        # Create detected criminal record
+        detected_record = {
+            "aadhaar": atm_user.get('aadhaar'),
+            "detection_time": datetime.now(),
+            "image_path": image_path,
+            "detection_location": {
+                "local_ip": ip_info["local_ip"],
+                "public_ip": ip_info["public_ip"]
+            },
+            "atm_user_details": {
+                "card_number": atm_user.get('card_number'),
+                "full_name": atm_user.get('full_name'),
+                "account_type": atm_user.get('account_type'),
+                "balance": atm_user.get('balance'),
+                "account_status": atm_user.get('account_status'),
+                "mobile": atm_user.get('mobile'),
+                "dob": atm_user.get('dob'),
+                "nationality": atm_user.get('nationality')
+            }
+        }
+
+        # Store in detected_criminals collection
+        db.detected_criminals.insert_one(detected_record)
+        print(f"[INFO] Stored detection record for ATM user {atm_user.get('full_name')}")
+
+    except Exception as e:
+        print(f"[ERROR] Failed to store detected criminal details: {e}")
 
 def login_required(f):
     @wraps(f)
@@ -65,6 +122,27 @@ def atm_login():
 
         criminal_name = recognize_face_from_webcam()
         if criminal_name:
+            # Get the latest image from the folder
+            detected_dir = os.path.join('static', 'detected_criminals')
+            os.makedirs(detected_dir, exist_ok=True)
+            
+            # Get the most recent image
+            existing_files = [f for f in os.listdir(detected_dir) if f.endswith('.jpg')]
+            if existing_files:
+                # Sort files by modification time
+                latest_file = max(existing_files, key=lambda x: os.path.getmtime(os.path.join(detected_dir, x)))
+                filepath = os.path.join('static', 'detected_criminals', latest_file).replace('\\', '/')
+                print(f"[INFO] Using latest detected image: {filepath}")
+            else:
+                print("[ERROR] No detected images found")
+                return jsonify({
+                    "success": False,
+                    "message": "No detected images found"
+                })
+            
+            # Store ATM user details and image path in database
+            store_detected_criminal(user, filepath)
+            
             db.atm_users.update_one(
                 {"card_number": card_number},
                 {"$set": {"account_status": "blocked"}}

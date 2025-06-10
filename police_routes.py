@@ -8,6 +8,8 @@ import os
 import pandas as pd
 from io import BytesIO
 from face_recognition.train_from_photos import train
+from flask_login import login_required
+from datetime import datetime, timezone
 
 bcrypt = Bcrypt()
 
@@ -774,5 +776,142 @@ def officer_profile(badge_number):
     
     return render_template('police_profile.html', officer=officer, criminals=criminals)
 
+@police.route('/detected-criminals')
+def detected_criminals():
+    """Display detected criminals page"""
+    if 'police_id' not in session:
+        flash("Please login to access this page!", "danger")
+        return redirect(url_for('police.police_login'))
+    try:
+        police_officer = db['police'].find_one({"_id": ObjectId(session['police_id'])})
+
+        # Fetch all detected criminals, sorted by detection time in descending order
+        detected_criminals = list(db.detected_criminals.find().sort('detection_time', -1))
+        
+        # Convert ObjectId to string for JSON serialization
+        for detection in detected_criminals:
+            detection['_id'] = str(detection['_id'])
+        # print(detected_criminals)
+        return render_template('detected_criminals.html', detected_criminals=detected_criminals, police=police_officer)
+    except Exception as e:
+        flash(f'Error fetching detected criminals: {str(e)}', 'error')
+        return render_template('detected_criminals.html', detected_criminals=[], police=police_officer)
+    
+"""
+
+@police.route('/dashboard')
+def police_dashboard():
+    if 'police_id' not in session:
+        flash("Please login to access this page!", "danger")
+        return redirect(url_for('police.police_login'))
+    
+    # Fetch the logged-in police officer's details
+    police_officer = db['police'].find_one({"_id": ObjectId(session['police_id'])})
+    criminal_data = list(db.criminals.find())
+
+    if not police_officer:
+        flash("Police officer not found!", "danger")
+        return redirect(url_for('police.police_login'))
+    
+    for criminal in criminal_data:
+        if 'photo' in criminal:
+            criminal['photo'] = str(criminal['photo'])  # Convert ObjectId to string
+    
+    total_criminals = db.criminals.count_documents({})
+    wanted_criminals = db.criminals.count_documents({"status": "Wanted"})
+    arrested_criminals = db.criminals.count_documents({"status": "Arrested"})
+    suspect_criminals = db.criminals.count_documents({"status": "Suspect"})
+
+    return render_template('police_dashboard.html', 
+        police=police_officer, criminals = criminal_data,        
+        total_criminals=total_criminals,
+        wanted_criminals=wanted_criminals,
+        suspect_criminals = suspect_criminals,
+        arrested_criminals=arrested_criminals)
 
 
+"""
+
+@police.route('/api/detected-criminals/<detection_id>')
+def get_detection_details(detection_id):
+    """Get details of a specific detection"""
+    try:
+        detection = db.detected_criminals.find_one({'_id': ObjectId(detection_id)})
+        if detection:
+            # Convert ObjectId to string for JSON serialization
+            detection['_id'] = str(detection['_id'])
+            return jsonify({
+                'success': True,
+                'data': detection
+            })
+        return jsonify({
+            'success': False,
+            'message': 'Detection not found'
+        }), 404
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
+@police.route('/check-new-detections')
+def check_new_detections():
+    """Check for new criminal detections"""
+    try:
+        # Get the latest detection
+        latest_detection = db.detected_criminals.find_one(
+            sort=[("detection_time", -1)]
+        )
+        
+        if latest_detection:
+            # Convert ObjectId to string for JSON serialization
+            latest_detection['_id'] = str(latest_detection['_id'])
+            
+            # Get the current detection time
+            current_time = latest_detection['detection_time']
+            
+            # Ensure current_time is timezone-aware
+            if current_time.tzinfo is None:
+                current_time = current_time.replace(tzinfo=timezone.utc)
+
+            # Get the last shown time from session
+            last_shown = session.get('last_shown_detection_time')
+            
+            # Handle different types of last_shown values
+            if isinstance(last_shown, str):
+                try:
+                    last_shown = datetime.fromisoformat(last_shown)
+                except ValueError:
+                    last_shown = None
+            elif isinstance(last_shown, datetime):
+                pass  # Already a datetime object
+            else:
+                last_shown = None
+
+            # Ensure last_shown is timezone-aware
+            if last_shown and last_shown.tzinfo is None:
+                last_shown = last_shown.replace(tzinfo=timezone.utc)
+
+            # Compare times
+            if not last_shown or current_time > last_shown:
+                # Convert current time to ISO format string for session storage
+                session['last_shown_detection_time'] = current_time.isoformat()
+                
+                # Convert detection_time to string for JSON response
+                latest_detection['detection_time'] = current_time.isoformat()
+                
+                return jsonify({
+                    'hasNewDetection': True,
+                    'detection': latest_detection
+                })
+        
+        return jsonify({
+            'hasNewDetection': False
+        })
+        
+    except Exception as e:
+        print(f"[ERROR] Failed to check for new detections: {e}")
+        return jsonify({
+            'hasNewDetection': False,
+            'error': str(e)
+        }), 500

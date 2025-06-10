@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detected Criminals | Criminal Detection System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4e73df;
+            --secondary-color: #1cc88a;
+            --danger-color: #e74a3b;
+            --warning-color: #f6c23e;
+            --dark-color: #5a5c69;
+            --sidebar-width: 250px;
+        }
+
+        body {
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f8f9fc;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: var(--sidebar-width);
+            min-height: 100vh;
+            background: linear-gradient(180deg, var(--primary-color) 0%, #224abe 100%);
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            transition: all 0.3s;
+            position: fixed;
+            z-index: 1000;
+        }
+
+        .sidebar-brand {
+            height: 4.375rem;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: 800;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            letter-spacing: 0.05rem;
+            z-index: 1;
+            color: white !important;
+        }
+
+        .sidebar-divider {
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            margin: 0 1rem 1rem;
+        }
+
+        .nav-item {
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 600;
+            padding: 0.75rem 1rem;
+            border-radius: 0.35rem;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-link i {
+            margin-right: 0.5rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            padding: 1.5rem;
+            min-height: 100vh;
+            transition: all 0.3s;
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 0.35rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            padding: 1rem 1.35rem;
+            font-weight: 600;
+        }
+
+        /* Table Styling */
+        .table {
+            color: var(--dark-color);
+        }
+
+        .table th {
+            border-top: none;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.65rem;
+            letter-spacing: 0.1rem;
+            color: #858796;
+        }
+
+        /* Detected Photo */
+        .detected-photo {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 0.35rem;
+            border: 2px solid #e3e6f0;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+        }
+
+        /* Modal Styling */
+        .modal-content {
+            border: none;
+            border-radius: 0.35rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+
+        .modal-header {
+            background-color: var(--primary-color);
+            color: white;
+            border-bottom: none;
+            border-radius: 0.35rem 0.35rem 0 0;
+        }
+
+        .modal-header .btn-close {
+            color: white;
+            opacity: 0.8;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -250px;
+            }
+
+            .sidebar.toggled {
+                margin-left: 0;
+            }
+
+            .main-content {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .main-content.toggled {
+                margin-left: 250px;
+            }
+
+            .card-body {
+                padding: 0.75rem;
+            }
+
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade {
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-brand">
+                <i class="bi bi-shield-lock"></i> Police Dashboard
+            </div>
+            <hr class="sidebar-divider">
+
+            <div class="sidebar-heading mt-3 mb-2 px-3 text-white-50 small">
+                CRIMINAL MANAGEMENT
+            </div>
+
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link " href="{{url_for('police.police_dashboard')}}">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{url_for('police.criminal_record')}}">
+                        <i class="bi bi-person-badge-fill"></i> Criminal Records
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{url_for('police.detected_criminals')}}">
+                        <i class="bi bi-file-earmark-bar-graph"></i> Live ATM Detection
+                    </a>
+                </li>
+            </ul>
+
+            <hr class="sidebar-divider mt-3">
+
+            <div class="sidebar-heading mt-3 mb-2 px-3 text-white-50 small">
+                USER
+            </div>
+
+            <ul class="nav flex-column mb-4">
+                <li class="nav-item">
+                    <a class="nav-link"
+                        href="{{ url_for('police.officer_profile', badge_number=police.badge_number) }}">
+                        <i class="bi bi-person-circle"></i> My Profile
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('police.logout') }}">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div
+                class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+                <h1 class="h2">Detected Criminals</h1>
+            </div>
+
+            <!-- Detected Criminals List -->
+            <div class="card animate-fade">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Name</th>
+                                    <th>Card Number</th>
+                                    <th>Detection Time</th>
+                                    <th>Location</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for detection in detected_criminals %}
+                                <tr>
+                                    <td>
+                                        <img src="{{ url_for('static', filename=detection.image_path.replace('static/', '')) }}"
+                                            class="detected-photo" alt="Detected Photo">
+                                    </td>
+                                    <td>{{ detection.atm_user_details.full_name }}</td>
+                                    <td>{{ detection.atm_user_details.card_number }}</td>
+                                    <td>{{ detection.detection_time.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td>{{ detection.detection_location.local_ip }}</td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm"
+                                            onclick="showDetectionDetails('{{ detection._id }}')">
+                                            <i class="bi bi-eye"></i> View Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detection Details Modal -->
+    <div class="modal fade" id="detectionDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detection Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <img id="modalImage" src="" class="img-fluid rounded" alt="Detected Photo">
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">ATM User Details</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Name:</th>
+                                    <td id="modalName"></td>
+                                </tr>
+                                <tr>
+                                    <th>Card Number:</th>
+                                    <td id="modalCardNumber"></td>
+                                </tr>
+                                <tr>
+                                    <th>Account Type:</th>
+                                    <td id="modalAccountType"></td>
+                                </tr>
+                                <tr>
+                                    <th>Balance:</th>
+                                    <td id="modalBalance"></td>
+                                </tr>
+                                <tr>
+                                    <th>Mobile:</th>
+                                    <td id="modalMobile"></td>
+                                </tr>
+                                <tr>
+                                    <th>DOB:</th>
+                                    <td id="modalDOB"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">Detection Information</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Detection Time:</th>
+                                    <td id="modalDetectionTime"></td>
+                                </tr>
+                                <tr>
+                                    <th>Local IP:</th>
+                                    <td id="modalLocalIP"></td>
+                                </tr>
+                                <tr>
+                                    <th>Public IP:</th>
+                                    <td id="modalPublicIP"></td>
+                                </tr>
+                                <tr>
+                                    <th>Aadhaar:</th>
+                                    <td id="modalAadhaar"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showDetectionDetails(detectionId) {
+            // Fetch detection details from the server
+            fetch(`/police/api/detected-criminals/${detectionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const detection = data.data;
+
+                        // Update modal content
+                        document.getElementById('modalImage').src = `/static/${detection.image_path.replace('static/', '')}`;
+                        document.getElementById('modalName').textContent = detection.atm_user_details.full_name;
+                        document.getElementById('modalCardNumber').textContent = detection.atm_user_details.card_number;
+                        document.getElementById('modalAccountType').textContent = detection.atm_user_details.account_type;
+                        document.getElementById('modalBalance').textContent = `₹${detection.atm_user_details.balance}`;
+                        document.getElementById('modalMobile').textContent = detection.atm_user_details.mobile;
+                        document.getElementById('modalDOB').textContent = detection.atm_user_details.dob;
+                        document.getElementById('modalDetectionTime').textContent = new Date(detection.detection_time).toLocaleString();
+                        document.getElementById('modalLocalIP').textContent = detection.detection_location.local_ip;
+                        document.getElementById('modalPublicIP').textContent = detection.detection_location.public_ip;
+                        document.getElementById('modalAadhaar').textContent = detection.aadhaar;
+
+                        // Show the modal
+                        new bootstrap.Modal(document.getElementById('detectionDetailsModal')).show();
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+
+</html>
