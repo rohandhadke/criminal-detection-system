@@ -10,6 +10,7 @@ from io import BytesIO
 from face_recognition.train_from_photos import train
 from flask_login import login_required
 from datetime import datetime, timezone
+from functools import wraps
 
 bcrypt = Bcrypt()
 
@@ -26,7 +27,23 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def police_login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'police_id' not in session and 'admin_id' not in session:
+            flash("Please login to access this page!", "danger")
+            return redirect(url_for('police.police_login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
+def police_or_admin_login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'police_id' not in session and 'admin_id' not in session:
+            flash("Please login as police or admin to access this page!", "danger")
+            return redirect(url_for('police.police_login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
 @police.route('/login', methods=['GET', 'POST'])
 def police_login():
@@ -60,11 +77,8 @@ def logout():
     return redirect(url_for('home'))
 
 @police.route('/dashboard')
+@police_login_required
 def police_dashboard():
-    if 'police_id' not in session:
-        flash("Please login to access this page!", "danger")
-        return redirect(url_for('police.police_login'))
-    
     # Fetch the logged-in police officer's details
     police_officer = db['police'].find_one({"_id": ObjectId(session['police_id'])})
     criminal_data = list(db.criminals.find())
@@ -91,11 +105,8 @@ def police_dashboard():
 
 
 @police.route('/add_criminal', methods=['POST'])
+@police_login_required
 def add_criminal():
-    if 'police_id' not in session:
-        flash("You must be logged in as a police officer to add a criminal.", "danger")
-        return redirect(url_for('police.police_login'))
-
     # Get form data
     name = request.form.get('name')
     alias = request.form.get('alias')
@@ -163,6 +174,7 @@ def add_criminal():
 
 
 @police.route('/photo/<photo_id>')
+@police_login_required
 def get_photo(photo_id):
     try:
         criminal = db.criminals.find_one({'_id': ObjectId(photo_id)})
@@ -178,6 +190,7 @@ def get_photo(photo_id):
         return f"Error: {str(e)}", 500
 
 @police.route("/edit_criminal/<criminal_id>", methods=["GET", "POST"])
+@police_login_required
 def edit_criminal(criminal_id):
     criminal = db.criminals.find_one({"_id": ObjectId(criminal_id)})
 
@@ -204,6 +217,7 @@ def edit_criminal(criminal_id):
 
 
 @police.route('/criminals/all')
+@police_login_required
 def criminal_record():
     # Fetch all criminal records from MongoDB
     criminals = list(db.criminals.find())
@@ -221,6 +235,7 @@ def criminal_record():
     return render_template('criminal_record.html', criminals=criminals)
 
 @police.route('/criminal/profile/<criminal_id>')
+@police_login_required
 def criminal_profile(criminal_id):
     try:
         # Fetch criminal details from MongoDB
@@ -255,6 +270,7 @@ def criminal_profile(criminal_id):
         return f"Error: {str(e)}", 500
 
 @police.route('/block_accounts/<criminal_id>', methods=['POST'])
+@police_login_required
 def block_accounts(criminal_id):
     try:
         # Fetch the criminal's Aadhaar
@@ -282,6 +298,7 @@ def block_accounts(criminal_id):
         return jsonify({"message": f"Error: {str(e)}"}), 500
 
 @police.route('/unblock_accounts/<criminal_id>', methods=['POST'])
+@police_login_required
 def unblock_accounts(criminal_id):
     try:
         # Fetch the criminal's Aadhaar
@@ -311,6 +328,7 @@ def unblock_accounts(criminal_id):
 
 
 @police.route('/export_criminal_records')
+@police_login_required
 def export_criminal_records():
     criminals = list(db.criminals.find({}))
     
@@ -342,13 +360,8 @@ def export_criminal_records():
     )
 
 @police.route('/api/criminals/<criminal_id>', methods=['GET'])
+@police_login_required
 def get_criminal(criminal_id):
-    if 'police_id' not in session:
-        return jsonify({
-            'success': False,
-            'message': 'Authentication required'
-        }), 401
-
     try:
         criminal = db.criminals.find_one({"_id": ObjectId(criminal_id)})
         if not criminal:
@@ -372,13 +385,8 @@ def get_criminal(criminal_id):
         }), 500
 
 @police.route('/api/criminals/<criminal_id>/update/<section>', methods=['POST'])
+@police_login_required
 def update_criminal_section(criminal_id, section):
-    if 'police_id' not in session:
-        return jsonify({
-            'success': False,
-            'message': 'Authentication required'
-        }), 401
-
     try:
         data = request.get_json()
         if not data:
@@ -475,13 +483,8 @@ def update_criminal_section(criminal_id, section):
         }), 500
 
 @police.route('/api/criminals/<criminal_id>/update/timeline', methods=['POST'])
+@police_login_required
 def update_criminal_timeline(criminal_id):
-    if 'police_id' not in session:
-        return jsonify({
-            'success': False,
-            'message': 'Authentication required'
-        }), 401
-
     try:
         data = request.get_json()
         criminal_id = ObjectId(criminal_id)
@@ -528,13 +531,8 @@ def update_criminal_timeline(criminal_id):
         }), 500
 
 @police.route('/api/criminals/<criminal_id>/update/associates', methods=['POST'])
+@police_login_required
 def update_criminal_associates(criminal_id):
-    if 'police_id' not in session:
-        return jsonify({
-            'success': False,
-            'message': 'Authentication required'
-        }), 401
-
     try:
         data = request.get_json()
         criminal_id = ObjectId(criminal_id)
@@ -581,13 +579,8 @@ def update_criminal_associates(criminal_id):
         }), 500
 
 @police.route('/api/criminals/<criminal_id>/update/evidence', methods=['POST'])
+@police_login_required
 def update_criminal_evidence(criminal_id):
-    if 'police_id' not in session:
-        return jsonify({
-            'success': False,
-            'message': 'Authentication required'
-        }), 401
-
     try:
         data = request.get_json()
         criminal_id = ObjectId(criminal_id)
@@ -634,13 +627,8 @@ def update_criminal_evidence(criminal_id):
         }), 500
 
 @police.route('/api/criminals/<criminal_id>/update/case', methods=['POST'])
+@police_login_required
 def update_criminal_case(criminal_id):
-    if 'police_id' not in session:
-        return jsonify({
-            'success': False,
-            'message': 'Authentication required'
-        }), 401
-
     try:
         data = request.get_json()
         criminal_id = ObjectId(criminal_id)
@@ -701,13 +689,8 @@ def update_criminal_case(criminal_id):
         }), 500
 
 @police.route('/api/police/officers', methods=['GET'])
+@police_login_required
 def get_available_officers():
-    if 'police_id' not in session:
-        return jsonify({
-            'success': False,
-            'message': 'Authentication required'
-        }), 401
-
     try:
         # Fetch all active police officers
         officers = list(db.police.find(
@@ -733,6 +716,7 @@ def get_available_officers():
         }), 500
 
 @police.route('/officer/profile/<badge_number>')
+@police_login_required
 def officer_profile(badge_number):
     # Fetch officer information
     officer = db['police'].find_one({'badge_number': badge_number})
@@ -777,62 +761,20 @@ def officer_profile(badge_number):
     return render_template('police_profile.html', officer=officer, criminals=criminals)
 
 @police.route('/detected-criminals')
+@police_login_required
 def detected_criminals():
-    """Display detected criminals page"""
-    if 'police_id' not in session:
-        flash("Please login to access this page!", "danger")
-        return redirect(url_for('police.police_login'))
-    try:
-        police_officer = db['police'].find_one({"_id": ObjectId(session['police_id'])})
-
-        # Fetch all detected criminals, sorted by detection time in descending order
-        detected_criminals = list(db.detected_criminals.find().sort('detection_time', -1))
-        
-        # Convert ObjectId to string for JSON serialization
-        for detection in detected_criminals:
-            detection['_id'] = str(detection['_id'])
-        # print(detected_criminals)
-        return render_template('detected_criminals.html', detected_criminals=detected_criminals, police=police_officer)
-    except Exception as e:
-        flash(f'Error fetching detected criminals: {str(e)}', 'error')
-        return render_template('detected_criminals.html', detected_criminals=[], police=police_officer)
+    # Fetch all detected criminals, sorted by detection time in descending order
+    officer = db['police'].find_one({"_id": ObjectId(session['police_id'])})
+    detected_criminals = list(db.detected_criminals.find().sort('detection_time', -1))
     
-"""
-
-@police.route('/dashboard')
-def police_dashboard():
-    if 'police_id' not in session:
-        flash("Please login to access this page!", "danger")
-        return redirect(url_for('police.police_login'))
-    
-    # Fetch the logged-in police officer's details
-    police_officer = db['police'].find_one({"_id": ObjectId(session['police_id'])})
-    criminal_data = list(db.criminals.find())
-
-    if not police_officer:
-        flash("Police officer not found!", "danger")
-        return redirect(url_for('police.police_login'))
-    
-    for criminal in criminal_data:
-        if 'photo' in criminal:
-            criminal['photo'] = str(criminal['photo'])  # Convert ObjectId to string
-    
-    total_criminals = db.criminals.count_documents({})
-    wanted_criminals = db.criminals.count_documents({"status": "Wanted"})
-    arrested_criminals = db.criminals.count_documents({"status": "Arrested"})
-    suspect_criminals = db.criminals.count_documents({"status": "Suspect"})
-
-    return render_template('police_dashboard.html', 
-        police=police_officer, criminals = criminal_data,        
-        total_criminals=total_criminals,
-        wanted_criminals=wanted_criminals,
-        suspect_criminals = suspect_criminals,
-        arrested_criminals=arrested_criminals)
-
-
-"""
+    # Convert ObjectId to string for JSON serialization
+    for detection in detected_criminals:
+        detection['_id'] = str(detection['_id'])
+    # print(detected_criminals)
+    return render_template('detected_criminals.html', detected_criminals=detected_criminals, police=officer)
 
 @police.route('/api/detected-criminals/<detection_id>')
+@police_login_required
 def get_detection_details(detection_id):
     """Get details of a specific detection"""
     try:
@@ -855,6 +797,7 @@ def get_detection_details(detection_id):
         }), 500
 
 @police.route('/check-new-detections')
+@police_login_required
 def check_new_detections():
     """Check for new criminal detections"""
     try:

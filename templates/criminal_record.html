@@ -232,9 +232,7 @@
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
                 <h1 class="h3 mb-0 text-gray-800">Criminal Records</h1>
                 <div>
-                    <button class="btn btn-primary me-2" onclick="filterRecentCriminals()">
-                        <i class="bi bi-funnel"></i> Filter Recent
-                    </button>
+
                     <button class="btn btn-success" onclick="exportToExcel()">
                         <i class="bi bi-download"></i> Export
                     </button>
@@ -529,22 +527,6 @@
             printWindow.focus();
             printWindow.print();
             printWindow.close();
-        }
-
-        function filterRecentCriminals() {
-            const rows = document.querySelectorAll('tbody tr');
-            const now = new Date();
-            
-            rows.forEach(row => {
-                const dateCell = row.querySelector('td:nth-child(6)'); // Adjust index based on your date column
-                if (dateCell) {
-                    const criminalDate = new Date(dateCell.textContent);
-                    const daysDiff = Math.floor((now - criminalDate) / (1000 * 60 * 60 * 24));
-                    
-                    // Show only criminals added in the last 30 days
-                    row.style.display = daysDiff <= 30 ? '' : 'none';
-                }
-            });
         }
 
         function exportToExcel() {

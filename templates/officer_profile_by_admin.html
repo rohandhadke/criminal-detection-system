@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Police Officer Profile (Admin)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body { 
+            padding: 20px;
+            background-color: #f8f9fa;
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        .profile-header { 
+            background-color: #4e73df;
+            padding: 30px;
+            border-radius: 5px;
+            color: white;
+            margin-bottom: 30px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+        .profile-photo { 
+            width: 150px; 
+            height: 150px; 
+            object-fit: cover; 
+            border-radius: 50%; 
+            border: 5px solid rgba(255,255,255,0.3);
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .card {
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
+            margin-bottom: 25px;
+        }
+        .card-header {
+            background-color: #4e73df;
+            color: white;
+            border-bottom: none;
+            border-radius: 0.5rem 0.5rem 0 0 !important;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #5a5c69;
+        }
+        .info-value {
+            margin-bottom: 10px;
+        }
+        .badge-wanted {
+            background-color: #e74a3b;
+        }
+        .badge-arrested {
+            background-color: #1cc88a;
+        }
+        .badge-suspect {
+            background-color: #f6c23e;
+            color: #000;
+        }
+        .criminal-photo {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Profile Header -->
+        <div class="profile-header text-center">
+            <h2>Edit Officer: {{ officer.full_name }}</h2>
+            <p class="mb-0">Badge Number: {{ officer.badge_number }} | {{ officer.department }}</p>
+        </div>
+        <form method="POST" action="{{ url_for('admin.update_officer', officer_id=officer._id) }}">
+        <div class="row">
+            <div class="col-md-6">
+                <!-- Personal Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-person-fill me-2"></i>Personal Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="info-label" for="full_name">Full Name</label>
+                                <input type="text" class="form-control mb-2" id="full_name" name="full_name" value="{{ officer.full_name }}" required>
+                                <label class="info-label" for="badge_number">Badge Number</label>
+                                <input type="text" class="form-control mb-2" id="badge_number" name="badge_number" value="{{ officer.badge_number }}" required>
+                                <label class="info-label" for="rank">Rank</label>
+                                <input type="text" class="form-control mb-2" id="rank" name="rank" value="{{ officer.rank }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="info-label" for="department">Department</label>
+                                <input type="text" class="form-control mb-2" id="department" name="department" value="{{ officer.department }}">
+                                <label class="info-label" for="email">Email</label>
+                                <input type="email" class="form-control mb-2" id="email" name="email" value="{{ officer.email }}" required>
+                                <label class="info-label" for="phone">Phone</label>
+                                <input type="text" class="form-control mb-2" id="phone" name="phone" value="{{ officer.phone }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Service Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-award-fill me-2"></i>Service Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="info-label" for="join_date">Join Date</label>
+                                <input type="date" class="form-control mb-2" id="join_date" name="join_date" value="{{ officer.join_date }}">
+                                <label class="info-label" for="years_of_service">Years of Service</label>
+                                <input type="number" class="form-control mb-2" id="years_of_service" name="years_of_service" value="{{ officer.years_of_service }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="info-label" for="specialization">Specialization</label>
+                                <input type="text" class="form-control mb-2" id="specialization" name="specialization" value="{{ officer.specialization }}">
+                                <label class="info-label" for="station">Current Station</label>
+                                <input type="text" class="form-control mb-2" id="station" name="station" value="{{ officer.station }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <!-- Statistics (read-only) -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <h3>{{ officer.stats.cases_handled }}</h3>
+                                <p class="text-muted">Cases Handled</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h3>{{ officer.stats.arrests_made }}</h3>
+                                <p class="text-muted">Arrests Made</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h3>{{ officer.stats.criminals_added }}</h3>
+                                <p class="text-muted">Criminals Added</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Recent Activity (read-only) -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Activity</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if officer.recent_activity %}
+                            {% for activity in officer.recent_activity %}
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-circle-fill text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <p class="mb-0">{{ activity.description }}</p>
+                                    <small class="text-muted">{{ activity.date }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-center">No recent activity</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-end mb-4">
+            <button type="submit" class="btn btn-success"><i class="bi bi-save me-2"></i>Save Changes</button>
+        </div>
+        </form>
+        <!-- Added Criminals (read-only) -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Criminals Added</h5>
+            </div>
+            <div class="card-body">
+                {% if criminals %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Photo</th>
+                                <th>Name</th>
+                                <th>Age</th>
+                                <th>Status</th>
+                                <th>Added On</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for criminal in criminals %}
+                            <tr>
+                                <td>
+                                    {% if criminal.photo_path %}
+                                    <img src="{{ url_for('static', filename=criminal.photo_path.replace('static/', '')) }}" class="criminal-photo" alt="Criminal Photo">
+                                    {% else %}
+                                    <img src="{{ url_for('static', filename='default_profile.png') }}" class="criminal-photo" alt="Default Photo">
+                                    {% endif %}
+                                </td>
+                                <td>{{ criminal.name }}</td>
+                                <td>{{ criminal.age }}</td>
+                                <td>
+                                    <span class="badge {% if criminal.status == 'Wanted' %} badge-wanted 
+                                        {% elif criminal.status == 'Arrested' %} badge-arrested 
+                                        {% else %} badge-suspect {% endif %}">
+                                        {{ criminal.status }}
+                                    </span>
+                                </td>
+                                <td>{{ criminal.registered_on }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="window.open(`{{ url_for('police.criminal_profile', criminal_id=criminal._id) }}`, '_blank')">
+                                        <i class="bi bi-eye-fill"></i> View
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center">No criminals added yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 
